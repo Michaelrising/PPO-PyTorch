@@ -7,7 +7,7 @@ import torch
 import numpy as np
 
 import gym
-import roboschool
+from env.gym_cancer.envs.cancercontrol import CancerControl
 
 # import pybullet_envs
 
@@ -18,62 +18,91 @@ from PPO import PPO
 #################################### Testing ###################################
 
 
-def test():
+def test(args):
 
     print("============================================================================================")
 
-    ################## hyperparameters ##################
+    ################## set device ##################
+    device = set_device() if args.cuda_cpu == "cpu" else set_device(args.cuda)
 
-    # env_name = "CartPole-v1"
-    # has_continuous_action_space = False
-    # max_ep_len = 400
-    # action_std = None
+    ####### initialize environment hyperparameters ######
 
+    env_name = args.env_id  # "RoboschoolWalker2d-v1"
+    num_env = args.num_env
+    max_updates = args.max_updates
+    eval_interval = args.eval_interval
+    model_save_start_updating_steps = args.model_save_start_updating_steps
+    eval_times = args.eval_times
 
-    # env_name = "LunarLander-v2"
-    # has_continuous_action_space = False
-    # max_ep_len = 300
-    # action_std = None
+    has_continuous_action_space = False  # continuous action space; else discrete
 
+    max_ep_len = 120  # max timesteps in one episode
 
-    # env_name = "BipedalWalker-v2"
-    # has_continuous_action_space = True
-    # max_ep_len = 1500           # max timesteps in one episode
-    # action_std = 0.1            # set same std for action distribution which was used while saving
+    print_freq = 2  # print avg reward in the interval (in num updating steps)
+    log_freq = 2  # log avg reward in the interval (in num updating steps)
+    save_model_freq = eval_interval * 10  # save model frequency (in num updating steps)
 
+    action_std = 0.6  # starting std for action distribution (Multivariate Normal)
+    action_std_decay_rate = 0.05  # linearly decay action_std (action_std = action_std - action_std_decay_rate)
+    min_action_std = 0.1  # minimum action_std (stop decay after action_std <= min_action_std)
+    action_std_decay_freq = int(2.5e5)  # action_std decay frequency (in num updating steps)
 
-    env_name = "RoboschoolWalker2d-v1"
-    has_continuous_action_space = True
-    max_ep_len = 1000           # max timesteps in one episode
-    action_std = 0.1            # set same std for action distribution which was used while saving
+    ####################################################
+    ################ PPO hyperparameters ################
 
+    decay_step_size = 500
+    decay_ratio = 0.5
+    update_timestep = 1  # update policy every n timesteps
+    K_epochs = 30  # update policy for K epochs in one PPO update
 
-    render = True              # render environment on screen
-    frame_delay = 0             # if required; add delay b/w frames
+    eps_clip = 0.2  # clip parameter for PPO
+    gamma = 0.99  # discount factor
 
+    lr_actor = 0.00003  # learning rate for actor network
+    lr_critic = 0.0001  # learning rate for critic network
 
-    total_test_episodes = 10    # total num of testing episodes
+    random_seed = args.seed  # set random seed if required (0 = no random seed)
 
-    K_epochs = 80               # update policy for K epochs
-    eps_clip = 0.2              # clip parameter for PPO
-    gamma = 0.99                # discount factor
+    ########################### Env Parameters ##########################
 
-    lr_actor = 0.0003           # learning rate for actor
-    lr_critic = 0.001           # learning rate for critic
+    if len(str(args.number)) == 1:
+        patientNo = "patient00" + str(args.number)
+    elif len(str(args.number)) == 2:
+        patientNo = "patient0" + str(args.number)
+    else:
+        patientNo = "patient" + str(args.number)
+    # patientNo ="patient006"
+    list_df = args.patients_pars[patientNo]
+    A, K, states, pars, best_pars = [np.array(list_df.loc[i, ~np.isnan(list_df.loc[i, :])]) for i in range(5)]
+    A = A.reshape(2, 2)
+    # A = np.array(list_df.loc[0, ~np.isnan(list_df.loc[0, :])]).reshape(2, 2)
+    # K = np.array(list_df.loc[1, ~np.isnan(list_df.loc[1, :])])
+    # states = np.array(list_df.loc[2, ~np.isnan(list_df.loc[2, :])])
+    # pars = np.array(list_df.loc[3, ~np.isnan(list_df.loc[3, :])])
+    init_state = states[:3]
+    terminate_state = states[3:]
 
-    #####################################################
+    # default_acts = pd.read_csv("../Model_creation/test-sigmoid/model_actions/" + patientNo + "_actions_seqs.csv")
+    # default_acts = np.array(default_acts)
+    #
+    # default_action = np.array(default_acts[:, 0], dtype=np.int)
+    weight = np.ones(2) / 2
+    base = 1.15
+    m1 = args.m1
+    m2 = args.m2
 
+    patient = (A, K, best_pars, init_state, terminate_state, weight, base, m1, m2)
 
-    env = gym.make(env_name)
+    test_env = CancerControl(patient=patient)
 
     # state space dimension
-    state_dim = env.observation_space.shape[0]
+    state_dim = test_env.observation_space.shape[0]
 
     # action space dimension
     if has_continuous_action_space:
-        action_dim = env.action_space.shape[0]
+        action_dim = test_env.action_space.shape[0]
     else:
-        action_dim = env.action_space.n
+        action_dim = test_env.action_space.n
 
 
     # initialize a PPO agent
@@ -85,8 +114,7 @@ def test():
     random_seed = 0             #### set this to load a particular checkpoint trained on random seed
     run_num_pretrained = 0      #### set this to load a particular checkpoint num
 
-
-    directory = "PPO_preTrained" + '/' + env_name + '/'
+    directory = "PPO_preTrained" + '/' + env_name + '/' + patientNo + "/"
     checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
     print("loading network from : " + checkpoint_path)
 
@@ -137,4 +165,4 @@ def test():
 
 if __name__ == '__main__':
 
-    test()
+    test(args)
