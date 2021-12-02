@@ -353,62 +353,53 @@ def train(args):
     log_f = open(act_log_f_name,"w+")
     log_f.write('Sample Actions List, Greedy Actions List\n')
 
-    running_episode = np.zeros(num_env)
-    running_ep_rewards = np.zeros(num_env)
-    running_ep_survival_month = np.zeros(num_env)
     #ppo_agent.buffers = [ppo_agent.buffer for _ in range(args.num_env)]
-
+    ep_rewards = [0 for _ in range(num_env)]
     # training loop
     reward_record = -1000000
     survival_record = 0
     for i_update in range(max_updates):
+        survival_month = 0
         for i, env in enumerate(envs):
-            time_step = 0
             determine = np.random.choice(2, p=[0.2, 0.8])  # explore 0.8 exploit 0.2
-            while time_step < mini_batch:
-                survival_month = 0
-                fea, _ = env.reset()
-                ep_rewards = 0
-                done = False
-                while not done:
-                    # select action with policy, with torch.no_grad()
-                    state_tensor, action, action_logprob = ppo_agent.select_action(fea) \
-                        if determine else ppo_agent.greedy_select_action(fea) # state_tensor is the tensor of current state
-                    ppo_agent.buffers[i].states.append(state_tensor)
-                    ppo_agent.buffers[i].actions.append(action)
-                    ppo_agent.buffers[i].logprobs.append(action_logprob)
+            fea, _ = env.reset()
+            ep_rewards[i] = 0
+            while True:
+                # select action with policy, with torch.no_grad()
+                state_tensor, action, action_logprob = ppo_agent.select_action(fea) \
+                    if determine else ppo_agent.greedy_select_action(fea) # state_tensor is the tensor of current state
+                ppo_agent.buffers[i].states.append(state_tensor)
+                ppo_agent.buffers[i].actions.append(action)
+                ppo_agent.buffers[i].logprobs.append(action_logprob)
 
-                    fea, _, reward, done, _ = env.step(action)
+                fea, _, reward, done, _ = env.step(action)
 
-                    # saving reward and is_terminals
-                    ppo_agent.buffers[i].rewards.append(reward)
-                    ppo_agent.buffers[i].is_terminals.append(done)
+                # saving reward and is_terminals
+                ppo_agent.buffers[i].rewards.append(reward)
+                ppo_agent.buffers[i].is_terminals.append(done)
 
-                    ep_rewards += reward
-                    survival_month += 1
-                    time_step += 1
-                    # break; if the episode is over
-                    if done:
-                        running_episode[i] += 1
-                        running_ep_rewards[i] += ep_rewards
-                        running_ep_survival_month[i] += survival_month
+                ep_rewards[i] += reward
+                survival_month += 1
+                # break; if the episode is over
+                if done:
+                    break
 
-        mean_rewards_all_env = running_ep_rewards / running_episode
-        mean_survival_month = running_ep_survival_month/running_episode
+        mean_rewards_all_env = sum(ep_rewards)/num_env
+        mean_survival_month = survival_month/num_env
         # update PPO agent
         loss = ppo_agent.update(decayflag=args.decayflag, grad_clamp=grad_clamp)
 
         # log in logging file
         #if i_update % log_freq == 0:
         writer.add_scalar('VLoss', loss, i_update)
-        writer.add_scalar("Reward/train", mean_rewards_all_env.mean(), i_update)
+        writer.add_scalar("Reward/train", mean_rewards_all_env, i_update)
 
         # printing average reward
         if i_update % print_freq == 0:
             # print average reward till last episode
-            print_avg_reward = mean_rewards_all_env.mean()
+            print_avg_reward = mean_rewards_all_env
             print_avg_reward = round(print_avg_reward, 2)
-            print_avg_survival_month = round(mean_survival_month.mean(), 2)
+            print_avg_survival_month = round(mean_survival_month, 2)
 
             print("Updates : {} \t\t SurvivalMonths : {} \t\t Average Reward : {}".format(i_update, print_avg_survival_month, print_avg_reward))
 
@@ -478,9 +469,6 @@ def train(args):
                 print("Elapsed Time  : ", datetime.now().replace(microsecond=0) - start_time)
                 print("--------------------------------------------------------------------------------------------")
 
-        running_episode = np.zeros(num_env)
-        running_ep_rewards = np.zeros(num_env)
-        running_ep_survival_month = np.zeros(num_env)
 
     log_f.close()
 
