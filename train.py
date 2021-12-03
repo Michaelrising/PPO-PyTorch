@@ -15,7 +15,6 @@ import matplotlib.pyplot as plt
 
 from PPO import PPO
 
-
 ################################## set device ##################################
 
 def set_device(cuda=None):
@@ -155,7 +154,7 @@ def train(args):
     decay_step_size = 500
     decay_ratio = 0.5
     grad_clamp = 0.5
-    update_timestep = 1         # update policy every n timesteps
+    update_timestep = 2         # update policy every n epoches
     K_epochs = 4                # update policy for K epochs in one PPO update
     mini_batch = 256
 
@@ -361,7 +360,7 @@ def train(args):
     for i_update in range(max_updates):
         survival_month = 0
         for i, env in enumerate(envs):
-            determine = np.random.choice(2, p=[0.2, 0.8])  # explore 0.8 exploit 0.2
+            determine = np.random.choice(2, p=[0.1, 0.9])  # explore 0.8 exploit 0.2
             fea, _ = env.reset()
             ep_rewards[i] = 0
             while True:
@@ -387,12 +386,13 @@ def train(args):
         mean_rewards_all_env = sum(ep_rewards)/num_env
         mean_survival_month = survival_month/num_env
         # update PPO agent
-        loss = ppo_agent.update(decayflag=args.decayflag, grad_clamp=grad_clamp)
+        if i_update % update_timestep == 0:
+            loss = ppo_agent.update(decayflag=args.decayflag, grad_clamp=grad_clamp)
 
         # log in logging file
         #if i_update % log_freq == 0:
-        writer.add_scalar('VLoss', loss, i_update)
-        writer.add_scalar("Reward/train", mean_rewards_all_env, i_update)
+            writer.add_scalar('VLoss', loss, i_update)
+            writer.add_scalar("Reward/train", mean_rewards_all_env, i_update)
 
         # printing average reward
         if i_update % print_freq == 0:
@@ -404,23 +404,23 @@ def train(args):
             print("Updates : {} \t\t SurvivalMonths : {} \t\t Average Reward : {}".format(i_update, print_avg_survival_month, print_avg_reward))
 
         if i_update % eval_interval == 0:
-            rewards, survivalMonth, actions, states, colors = evaluate(test_env, ppo_agent.policy_old, eval_times)
+            # rewards, survivalMonth, actions, states, colors = evaluate(test_env, ppo_agent.policy_old, eval_times)
             g_rewards, g_survivalMonth, g_actions, g_states, g_colors = greedy_evaluate(test_env, ppo_agent.policy_old, eval_times)
-            writer.add_scalar("Reward/evaluate", rewards, i_update)
+            # writer.add_scalar("Reward/evaluate", rewards, i_update)
             writer.add_scalar("Reward/greedy_evaluate", g_rewards, i_update)
-            writer.add_scalar("Survival month", survivalMonth, i_update)
-            log_f.write('{},{}\n'.format(actions, g_actions))
-            log_f.flush()
-            if rewards > reward_record and i_update >= model_save_start_updating_steps:
-                reward_record = rewards
-                x = range(states.shape[0])
-                ad = states[:, 0]
-                ai = states[:, 1]
-                psa = states[:, 2]
+            writer.add_scalar("Survival month", g_survivalMonth, i_update)
+            # log_f.write('{},{}\n'.format(actions, g_actions))
+            # log_f.flush()
+            if g_rewards > reward_record and i_update >= model_save_start_updating_steps:
+                reward_record = g_rewards
+                x = range(g_states.shape[0])
+                ad = g_states[:, 0]
+                ai = g_states[:, 1]
+                psa = g_states[:, 2]
                 fig = plt.figure()
                 ax1 = fig.add_subplot(1, 2, 1)
                 ax1.plot(x, psa, color="black", linestyle="-", linewidth=1)
-                plt.scatter(x, psa, color=colors)
+                plt.scatter(x, psa, color=g_colors)
                 ax1.set_xlabel("Time (months)")
                 ax1.set_ylabel("PSA level (ug/ml)")
 
@@ -442,14 +442,14 @@ def train(args):
 
             # save model weights
             if i_update % save_model_freq == 0:
-                x = range(states.shape[0])
-                ad = states[:, 0]
-                ai = states[:, 1]
-                psa = states[:, 2]
+                x = range(g_states.shape[0])
+                ad = g_states[:, 0]
+                ai = g_states[:, 1]
+                psa = g_states[:, 2]
                 fig = plt.figure()
                 ax1 = fig.add_subplot(1, 2, 1)
                 ax1.plot(x, psa, color="black", linestyle="-", linewidth=1)
-                plt.scatter(x, psa, color=colors)
+                plt.scatter(x, psa, color=g_colors)
                 ax1.set_xlabel("Time (months)")
                 ax1.set_ylabel("PSA level (ug/ml)")
 
@@ -468,7 +468,6 @@ def train(args):
                 print("model saved")
                 print("Elapsed Time  : ", datetime.now().replace(microsecond=0) - start_time)
                 print("--------------------------------------------------------------------------------------------")
-
 
     log_f.close()
 
@@ -518,7 +517,7 @@ if __name__ == '__main__':
     parser.add_argument('--patients_pars', type=dict, default=patient_pars)
     parser.add_argument('--patients_train', type=list, default=patient_train)
     parser.add_argument('--number', '-n', type=int, help='Patient No., int type, requested',
-                        default=11)  # the only one argument needed to be inputted
+                        default=12)  # the only one argument needed to be inputted
     parser.add_argument('--num_env', type=int, help='number of environments',
                         default=2)
     parser.add_argument('--max_updates', type=int, help='max number of updating times',

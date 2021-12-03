@@ -2,24 +2,58 @@ import os
 import glob
 import time
 from datetime import datetime
-
+import pandas as pd
 import torch
 import numpy as np
-
+import argparse
 import gym
 from env.gym_cancer.envs.cancercontrol import CancerControl
-
+import matplotlib.pyplot as plt
 # import pybullet_envs
 
 from PPO import PPO
 
+def set_device(cuda=None):
+    print("============================================================================================")
 
+    # set device to cpu or cuda
+    device = torch.device('cpu')
+
+    if torch.cuda.is_available() and cuda is not None:
+        device = torch.device('cuda:' + str(cuda))
+        torch.cuda.empty_cache()
+        print("Device set to : " + str(torch.cuda.get_device_name(device)))
+    else:
+        print("Device set to : cpu")
+
+    print("============================================================================================")
+    return device
 
 #################################### Testing ###################################
 
+def plot_figure(data, file):
+    x = range(data.shape[0])
+    ad = data[:, 0]
+    ai = data[:, 1]
+    psa = data[:, 2]
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1, 2, 1)
+    ax1.plot(x, psa, color="black", linestyle="-", linewidth=1)
+    # plt.scatter(x, psa, color=colors)
+    ax1.set_xlabel("Time (months)")
+    ax1.set_ylabel("PSA level (ug/ml)")
+
+    ax2 = fig.add_subplot(1, 2, 2)
+    ax2.plot(x, ad, color="black", linestyle="--", linewidth=1, label="AD")
+    ax2.plot(x, ai, color="black", linestyle="-.", linewidth=1, label="AI")
+    ax2.set_xlabel("Time (months)")
+    ax2.set_ylabel("Cell counts")
+    ax2.legend(loc='upper right')
+    plt.savefig(file, dpi=300)
+    plt.close()
+    return
 
 def test(args):
-
     print("============================================================================================")
 
     ################## set device ##################
@@ -53,7 +87,7 @@ def test(args):
     decay_step_size = 500
     decay_ratio = 0.5
     update_timestep = 1  # update policy every n timesteps
-    K_epochs = 30  # update policy for K epochs in one PPO update
+    K_epochs = 4  # update policy for K epochs in one PPO update
 
     eps_clip = 0.2  # clip parameter for PPO
     gamma = 0.99  # discount factor
@@ -90,8 +124,10 @@ def test(args):
     base = 1.15
     m1 = args.m1
     m2 = args.m2
+    drug_decay = args.drug_decay
+    drug_length = 8
 
-    patient = (A, K, best_pars, init_state, terminate_state, weight, base, m1, m2)
+    patient = (A, K, best_pars, init_state, terminate_state, weight, base, m1, m2, drug_decay, drug_length)
 
     test_env = CancerControl(patient=patient)
 
@@ -106,7 +142,20 @@ def test(args):
 
 
     # initialize a PPO agent
-    ppo_agent = PPO(state_dim, action_dim, lr_actor, lr_critic, gamma, K_epochs, eps_clip, has_continuous_action_space, action_std)
+    ppo_agent = PPO(
+            state_dim,
+            action_dim,
+            lr_actor,
+            lr_critic,
+            gamma,
+            K_epochs,
+            eps_clip,
+            has_continuous_action_space,
+            num_env,
+            device,
+            decay_step_size,
+            decay_ratio,
+            action_std)
 
 
     # preTrained weights directory
@@ -114,8 +163,9 @@ def test(args):
     random_seed = 0             #### set this to load a particular checkpoint trained on random seed
     run_num_pretrained = 0      #### set this to load a particular checkpoint num
 
-    directory = "PPO_preTrained" + '/' + env_name + '/' + patientNo + "/"
-    checkpoint_path = directory + "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    best_directory = "PPO_preTrained" + '/' + env_name + '/' + patientNo + "/" + "best/"
+    best_name = os.listdir(best_directory)
+    checkpoint_path = best_directory + best_name[0] # "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
     print("loading network from : " + checkpoint_path)
 
     ppo_agent.load(checkpoint_path)
@@ -125,32 +175,42 @@ def test(args):
 
 
     test_running_reward = 0
-
+    total_test_episodes = 100
+    states = []
+    doses = []
+    record_reward = -1000
+    record_survival_month = 0
     for ep in range(1, total_test_episodes+1):
         ep_reward = 0
-        state = env.reset()
-
-        for t in range(1, max_ep_len+1):
-            action = ppo_agent.select_action(state)
-            state, reward, done, _ = env.step(action)
+        ep_survival_month = 0
+        fea, state= test_env.reset()
+        states.append(state)
+        while True:
+            _, action, _ = ppo_agent.greedy_select_action(fea)
+            fea, state, reward, done, infos = test_env.step(action)
+            states.append(state)
+            doses.append(infos["dose"])
             ep_reward += reward
-
-            if render:
-                env.render()
-                time.sleep(frame_delay)
-
+            ep_survival_month += 1
             if done:
                 break
-
-        # clear buffer
-        ppo_agent.buffer.clear()
-
+        if record_reward < ep_reward:
+            record_reward = ep_reward
+            record_states_high_reward = states.copy()
+        if record_survival_month < ep_survival_month:
+            record_survival_month = ep_survival_month
+            record_states_high_survival_time = states.copy()
+        states.clear()
         test_running_reward +=  ep_reward
         print('Episode: {} \t\t Reward: {}'.format(ep, round(ep_reward, 2)))
         ep_reward = 0
 
-    env.close()
-
+    test_env.close()
+    # maximum rewards
+    if not os.path.exists("./PPO_figs/" + patientNo ):
+        os.makedirs("./PPO_figs/" + patientNo )
+    plot_figure(record_states_high_reward, "./PPO_figs/" + patientNo + "/high_reward_model.png")
+    plot_figure(record_states_high_survival_time, "./PPO_figs/" + patientNo + "/high_survival_time_model.png")
 
     print("============================================================================================")
 
@@ -164,5 +224,49 @@ def test(args):
 
 
 if __name__ == '__main__':
+    print("============================================================================================")
 
+    parsdir = "./Data/model_pars"
+    parslist = os.listdir(parsdir)
+    patient_pars = {}
+    patient_test = []
+    patient_train = []
+    # reading the ode parameters and the initial/terminal states
+    for args in parslist:
+        pars_df = pd.read_csv(parsdir + '/' + args)
+        patient = args[5:(-4)]
+        patient_train.append(patient)
+        if patient not in patient_test:
+            patient_pars[patient] = pars_df
+
+    env_dict = gym.envs.registration.registry.env_specs.copy()
+    for env in env_dict:
+        if 'CancerControl-v0' in env:
+            print("Remove {} from registry".format(env))
+            del gym.envs.registration.registry.env_specs[env]
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--config', type=str, default=os.path.join('config', 'sacd.yaml'))
+    parser.add_argument('--env_id', type=str, default='gym_cancer:CancerControl-v0')
+    parser.add_argument('--cuda', type=int, default=0)
+    parser.add_argument("--cuda_cpu", type=str, default="cuda", help="Set device as cuda or cpu")
+    parser.add_argument('--m1', type=float, default=0.5)
+    parser.add_argument('--m2', type=int, default=12)
+    parser.add_argument('--drug_decay', type=float, default=0.75, help="The decay rate for drug penalty")
+    parser.add_argument('--seed', type=int, default=0)  # random.randint(0,100000))
+    parser.add_argument('--patients_pars', type=dict, default=patient_pars)
+    parser.add_argument('--patients_train', type=list, default=patient_train)
+    parser.add_argument('--number', '-n', type=int, help='Patient No., int type, requested',
+                        default=11)  # the only one argument needed to be inputted
+    parser.add_argument('--num_env', type=int, help='number of environments',
+                        default=2)
+    parser.add_argument('--max_updates', type=int, help='max number of updating times',
+                        default=int(1e5))
+    parser.add_argument("--eval_interval", type=int, help="interval to evaluate the policy and plot figures",
+                        default=50)
+    parser.add_argument('--decayflag', type=bool, default=True, help='lr decay flag')
+    parser.add_argument('--model_save_start_updating_steps', type=int, default=500,
+                        help="The start steps of saving best model")
+    parser.add_argument("--eval_times", type=int, default=10, help='The evaluation time of current policy')
+    args = parser.parse_args()
     test(args)

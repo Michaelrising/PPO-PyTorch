@@ -57,6 +57,7 @@ class CancerControl(gym.Env, ABC):
         self._action = None
         self.drug_penalty_decay = drug_decay
         self.drug_penalty_length = drug_length
+        self.drug_penalty_index = 0
         self.rest_decay = 0.95
         self.max_episodes_steps = 120
         self.metastasis_ai_deque = deque(maxlen=121)
@@ -129,6 +130,12 @@ class CancerControl(gym.Env, ABC):
             self.reward_index = 0
             self.penalty_index += np.ones(2, dtype=np.float)
 
+        if bool(action):
+            self.drug_penalty_index += 1
+        else:
+            self.drug_penalty_index -= 1 if self.drug_penalty_index > 0 else 0
+
+
         evolution, df = self.CancerEvo(dose_)
         self.states = evolution[:, -1]
         x, psa = self.states[0:2], self.states[-1]
@@ -165,17 +172,17 @@ class CancerControl(gym.Env, ABC):
         # d_decay = d_decay[int(len(self.dosage_arr) - self.drug_penalty_length):len(self.dosage_arr)]
         # c_decay = np.flipud(self.drug_penalty_decay ** np.arange(self.penalty_index[0]))
         # l_decay = np.flipud(self.drug_penalty_decay ** np.arange(self.penalty_index[1]))
-        c_dose = (dosages[int(len(self.dosage_arr) - self.drug_penalty_length):, 0]*d_decay).sum() / 200
-        l_dose = (dosages[int(len(self.dosage_arr) - self.drug_penalty_length):, 1]*d_decay).sum() / 7.5
+        c_dose = (dosages[- self.drug_penalty_length:, 0]*d_decay).sum() / 200
+        l_dose = (dosages[- self.drug_penalty_length:, 1]*d_decay).sum() / 7.5
         d = np.array([c_dose, l_dose])
-        drug_penalty = sum((self.base**self.penalty_index -1) *d * np.array([.7, .3])) # (self.base**self.penalty_index -1) *
+        drug_penalty = sum((self.base**self.drug_penalty_index) * d * np.array([.6, .4])) # (self.base**self.penalty_index -1) *
         reward += 5*(r_shape + c2) - drug_penalty + self.steps + 1
         # reward += self.reward_index * 0.5
         if done:
             drug_penalty = 0
-            dosage = np.array([0.7, 0.3]) * np.array(self.dosage_arr).sum(axis = 0)/np.array([200, 7.5])
+            dosage = np.array([0.6, 0.4]) * np.array(self.dosage_arr).sum(axis = 0)/np.array([200, 7.5])
             # reward -= sum(dosage)
-            reward -= self.max_episodes_steps - self.steps # /self.max_episodes_steps
+            reward -= self.max_episodes_steps - self.steps + dosage.sum()
         # reward *= self.steps/self.max_episodes_steps
         self.steps += 1
         normalized_states = np.log10(self.states) / np.log10(self.normalized_coef)
@@ -188,9 +195,7 @@ class CancerControl(gym.Env, ABC):
             else:
                 normalized_df[i] = dx/np.log10(self.normalized_coef[i])
         fea = np.concatenate((normalized_states, normalized_df, np.array([self.steps/self.max_episodes_steps]))).reshape(-1)
-        return fea, self.states, reward, done, {"evolution": evolution, "dose": dose_, "potential": phi0, "r_shape": r_shape,
-                                   "c2": c2, "dose_p": drug_penalty,
-                                   "ad": self.metastasis_ad_deque.count(1), "ai": self.metastasis_ai_deque.count(1)}
+        return fea, self.states, reward, done, {"evolution": evolution, "dose": dose_}
 
     def _utilize(self, t, action):
         # potential function is only related to states

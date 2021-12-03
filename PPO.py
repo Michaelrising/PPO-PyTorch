@@ -105,9 +105,9 @@ class ActorCritic(nn.Module):
         with torch.no_grad():
             action_probs = self.actor(state)
             greedy_action = torch.argmax(
-                action_probs.unsqueeze(0), dim=1, keepdim=True)
+                action_probs.unsqueeze(0), dim=1, keepdim=False)
             dist = Categorical(action_probs)
-            action_logprob = dist.log_prob(greedy_action)
+            action_logprob = dist.log_prob(greedy_action.squeeze(-1))
         return greedy_action.detach(), action_logprob.detach()
 
     def evaluate(self, state, action):
