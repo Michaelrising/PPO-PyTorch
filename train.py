@@ -147,6 +147,7 @@ def train(args):
     action_std_decay_rate = 0.05        # linearly decay action_std (action_std = action_std - action_std_decay_rate)
     min_action_std = 0.1                # minimum action_std (stop decay after action_std <= min_action_std)
     action_std_decay_freq = int(2.5e5)  # action_std decay frequency (in num updating steps)
+    explore_eps = 0.8
 
     ####################################################
     ################ PPO hyperparameters ################
@@ -298,6 +299,7 @@ def train(args):
         print("Initializing a discrete action space policy")
 
     print("--------------------------------------------------------------------------------------------")
+    print("The initial explore rate : " + str(explore_eps) +" and initial exploit rate is : 1- " + str(explore_eps))
 
     print("PPO update frequency : " + str(update_timestep) + " episodes")
     print("PPO K epochs : ", K_epochs)
@@ -360,7 +362,8 @@ def train(args):
     for i_update in range(max_updates):
         survival_month = 0
         for i, env in enumerate(envs):
-            determine = np.random.choice(2, p=[0.1, 0.9])  # explore 0.8 exploit 0.2
+            eps = max(- max(i_update - 2000, 0) * (explore_eps - 0.3)/20000 + explore_eps, 0.3)
+            determine = np.random.choice(2, p=[1 - eps, eps])  # explore epsilon
             fea, _ = env.reset()
             ep_rewards[i] = 0
             while True:

@@ -175,7 +175,7 @@ class CancerControl(gym.Env, ABC):
         c_dose = (dosages[- self.drug_penalty_length:, 0]*d_decay).sum() / 200
         l_dose = (dosages[- self.drug_penalty_length:, 1]*d_decay).sum() / 7.5
         d = np.array([c_dose, l_dose])
-        drug_penalty = sum((self.base**self.drug_penalty_index) * d * np.array([.6, .4])) # (self.base**self.penalty_index -1) *
+        drug_penalty = sum(self.base**self.drug_penalty_index * d * np.array([.6, .4])) # (self.base**self.penalty_index -1) *
         reward += 5*(r_shape + c2) - drug_penalty + self.steps + 1
         # reward += self.reward_index * 0.5
         if done:
@@ -249,6 +249,7 @@ class CancerControl(gym.Env, ABC):
         self.dosage_arr = []
         self.penalty_index = np.zeros(2, dtype=np.float)
         self.reward_index = np.zeros(2, dtype=np.float)
+        self.drug_penalty_index = 0
         self.metastasis_ad_deque.clear()
         self.metastasis_ai_deque.clear()
         self.leu_on = False
