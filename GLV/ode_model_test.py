@@ -625,10 +625,10 @@ def train_glv(args, alldata):
             val_psa = p[validate_days]
             validate_loss = np.mean((val_psa - validate_psa) ** 2)
             log.append([epoch, loss.detach().numpy().item(), validate_loss])
-            if epoch % 100 == 0:
-                file_writing_obj = open('./analysis-sigmoid/model_infos/infos-' + patientNo + "-" + str(args.t) + '.txt',
-                    'w')
+            if epoch % 50 == 0:
+                file_writing_obj = open('./analysis-sigmoid/model_infos/infos-' + patientNo + "-" + str(args.t) + '.txt', 'w')
                 file_writing_obj.write(str(log))
+                file_writing_obj.close()
                 #print('Epoch: {} \t Loss: {:.2f} \t Val_Loss: {:.2f}'.format(epoch, loss.detach().numpy().item(), validate_loss))
             if epoch % 100 == 0:
                 x = inputs.detach().numpy()
