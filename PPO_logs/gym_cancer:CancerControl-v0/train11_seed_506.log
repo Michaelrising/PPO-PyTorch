@@ -1,0 +1,55 @@
+nohup: ignoring input
+============================================================================================
+Remove CancerControl-v0 from registry
+============================================================================================
+Device set to : NVIDIA GeForce RTX 3090
+============================================================================================
+training environment name : gym_cancer:CancerControl-v0--patient011
+2021-12-11 19:30:18.548439: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+current logging run number for gym_cancer:CancerControl-v0 :  7
+Actions are logged at : PPO_logs/gym_cancer:CancerControl-v0//patient011/PPO_ActionList_gym_cancer:CancerControl-v0_patient011_log_7.csv
+save checkpoint path : PPO_preTrained/gym_cancer:CancerControl-v0/patient011/
+save checkpoint format : patient011_20211211-1930_PPO_gym_cancer:CancerControl-v0_506_0.pth
+--------------------------------------------------------------------------------------------
+num of envs : 2
+max training updating times :  100000
+max timesteps per episode :  120
+model saving frequency : 500 episodes
+log frequency : 2 episodes
+printing average reward over episodes in last : 2 episodes
+--------------------------------------------------------------------------------------------
+state space dimension :  7
+action space dimension :  10
+--------------------------------------------------------------------------------------------
+Initializing a discrete action space policy
+--------------------------------------------------------------------------------------------
+The initial explore rate : 0.8 and initial exploit rate is : 1- 0.8
+PPO update frequency : 2 episodes
+PPO K epochs :  4
+PPO epsilon clip :  0.2
+discount factor (gamma) :  0.99
+--------------------------------------------------------------------------------------------
+decaying optimizer with step size :  500  decay ratio :  0.5
+optimizer learning rate actor :  3e-05
+optimizer learning rate critic :  0.0001
+--------------------------------------------------------------------------------------------
+setting random seed to  506
+============================================================================================
+Traceback (most recent call last):
+  File "train.py", line 535, in <module>
+    train(args)
+  File "train.py", line 331, in train
+    ppo_agent = PPO(
+  File "/home/yitao/PPO-Pytorch/PPO.py", line 152, in __init__
+    self.policy = ActorCritic(state_dim, action_dim, has_continuous_action_space, action_std_init, self.device).to(self.device)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 612, in to
+    return self._apply(convert)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 359, in _apply
+    module._apply(fn)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 359, in _apply
+    module._apply(fn)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 381, in _apply
+    param_applied = fn(param)
+  File "/opt/anaconda3/lib/python3.8/site-packages/torch/nn/modules/module.py", line 610, in convert
+    return t.to(device, dtype if t.is_floating_point() else None, non_blocking)
+RuntimeError: CUDA error: out of memory

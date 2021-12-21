@@ -1,0 +1,113 @@
+nohup: ignoring input
+============================================================================================
+Remove CancerControl-v0 from registry
+============================================================================================
+Device set to : NVIDIA GeForce RTX 3090
+============================================================================================
+training environment name : gym_cancer:CancerControl-v0--patient011
+2021-12-14 15:44:50.346125: I tensorflow/stream_executor/platform/default/dso_loader.cc:49] Successfully opened dynamic library libcudart.so.11.0
+current logging run number for gym_cancer:CancerControl-v0 :  10
+Actions are logged at : PPO_logs/gym_cancer:CancerControl-v0//patient011/PPO_ActionList_gym_cancer:CancerControl-v0_patient011_log_10.csv
+save checkpoint path : PPO_preTrained/gym_cancer:CancerControl-v0/patient011/
+save checkpoint format : patient011-m1-0.5-m2-4_PPO_gym_cancer:CancerControl-v0_0_0.pth
+--------------------------------------------------------------------------------------------
+num of envs : 2
+max training updating times :  100000
+max timesteps per episode :  120
+model saving frequency : 500 episodes
+log frequency : 2 episodes
+printing average reward over episodes in last : 2 episodes
+--------------------------------------------------------------------------------------------
+state space dimension :  7
+action space dimension :  10
+--------------------------------------------------------------------------------------------
+Initializing a discrete action space policy
+--------------------------------------------------------------------------------------------
+The initial explore rate : 0.8 and initial exploit rate is : 1- 0.8
+PPO update frequency : 2 episodes
+PPO K epochs :  4
+PPO epsilon clip :  0.1
+discount factor (gamma) :  0.99
+--------------------------------------------------------------------------------------------
+decaying optimizer with step size :  500  decay ratio :  0.5
+optimizer learning rate actor :  3e-05
+optimizer learning rate critic :  0.0001
+============================================================================================
+Started training at (GMT) :  2021-12-14 15:44:55
+============================================================================================
+Updates : 0 		 SurvivalMonths : 43.5 		 Average Reward : 524.36
+--------------------------------------------------------------------------------------------
+saving model at : PPO_preTrained/gym_cancer:CancerControl-v0/patient011/final/patient011-m1-0.5-m2-4_PPO_gym_cancer:CancerControl-v0_0_0.pth
+model saved
+Elapsed Time  :  0:00:08
+--------------------------------------------------------------------------------------------
+Updates : 2 		 SurvivalMonths : 32.0 		 Average Reward : 501.28
+Updates : 4 		 SurvivalMonths : 43.5 		 Average Reward : 857.46
+Updates : 6 		 SurvivalMonths : 43.5 		 Average Reward : 681.91
+Updates : 8 		 SurvivalMonths : 44.5 		 Average Reward : 564.83
+Updates : 10 		 SurvivalMonths : 44.5 		 Average Reward : 495.24
+Updates : 12 		 SurvivalMonths : 45.0 		 Average Reward : 622.53
+Updates : 14 		 SurvivalMonths : 44.0 		 Average Reward : 702.01
+Updates : 16 		 SurvivalMonths : 44.5 		 Average Reward : 507.23
+Updates : 18 		 SurvivalMonths : 41.5 		 Average Reward : 662.11
+Updates : 20 		 SurvivalMonths : 28.0 		 Average Reward : 347.6
+Updates : 22 		 SurvivalMonths : 45.0 		 Average Reward : 664.21
+Updates : 24 		 SurvivalMonths : 48.0 		 Average Reward : 673.59
+Updates : 26 		 SurvivalMonths : 37.0 		 Average Reward : 461.87
+Updates : 28 		 SurvivalMonths : 39.0 		 Average Reward : 591.41
+Updates : 30 		 SurvivalMonths : 43.0 		 Average Reward : 583.25
+Updates : 32 		 SurvivalMonths : 43.0 		 Average Reward : 474.06
+Updates : 34 		 SurvivalMonths : 43.0 		 Average Reward : 481.33
+Updates : 36 		 SurvivalMonths : 46.0 		 Average Reward : 639.36
+Updates : 38 		 SurvivalMonths : 42.5 		 Average Reward : 347.46
+Updates : 40 		 SurvivalMonths : 43.0 		 Average Reward : 544.13
+Updates : 42 		 SurvivalMonths : 33.5 		 Average Reward : 319.74
+Updates : 44 		 SurvivalMonths : 44.5 		 Average Reward : 706.05
+Updates : 46 		 SurvivalMonths : 46.5 		 Average Reward : 849.77
+Updates : 48 		 SurvivalMonths : 47.5 		 Average Reward : 817.42
+Updates : 50 		 SurvivalMonths : 45.0 		 Average Reward : 591.6
+Updates : 52 		 SurvivalMonths : 43.0 		 Average Reward : 552.96
+Updates : 54 		 SurvivalMonths : 47.5 		 Average Reward : 634.01
+Updates : 56 		 SurvivalMonths : 48.0 		 Average Reward : 865.79
+Updates : 58 		 SurvivalMonths : 47.5 		 Average Reward : 885.52
+Updates : 60 		 SurvivalMonths : 37.0 		 Average Reward : 669.02
+Updates : 62 		 SurvivalMonths : 47.5 		 Average Reward : 908.32
+Updates : 64 		 SurvivalMonths : 43.5 		 Average Reward : 601.32
+Updates : 66 		 SurvivalMonths : 50.0 		 Average Reward : 1063.68
+Updates : 68 		 SurvivalMonths : 48.0 		 Average Reward : 989.51
+Updates : 70 		 SurvivalMonths : 49.5 		 Average Reward : 1064.84
+Updates : 72 		 SurvivalMonths : 43.0 		 Average Reward : 722.33
+Updates : 74 		 SurvivalMonths : 45.5 		 Average Reward : 964.25
+Updates : 76 		 SurvivalMonths : 46.5 		 Average Reward : 898.72
+Updates : 78 		 SurvivalMonths : 46.5 		 Average Reward : 1024.38
+Updates : 80 		 SurvivalMonths : 52.0 		 Average Reward : 1195.99
+Updates : 82 		 SurvivalMonths : 41.5 		 Average Reward : 810.77
+Updates : 84 		 SurvivalMonths : 43.0 		 Average Reward : 887.51
+Updates : 86 		 SurvivalMonths : 37.0 		 Average Reward : 481.04
+Updates : 88 		 SurvivalMonths : 41.0 		 Average Reward : 522.59
+Updates : 90 		 SurvivalMonths : 34.5 		 Average Reward : 565.1
+Updates : 92 		 SurvivalMonths : 33.5 		 Average Reward : 452.85
+Updates : 94 		 SurvivalMonths : 44.5 		 Average Reward : 713.93
+Updates : 96 		 SurvivalMonths : 40.5 		 Average Reward : 684.3
+Updates : 98 		 SurvivalMonths : 36.0 		 Average Reward : 544.36
+Updates : 100 		 SurvivalMonths : 46.5 		 Average Reward : 779.02
+Updates : 102 		 SurvivalMonths : 33.0 		 Average Reward : 496.71
+Updates : 104 		 SurvivalMonths : 37.5 		 Average Reward : 620.67
+Updates : 106 		 SurvivalMonths : 46.0 		 Average Reward : 799.69
+Updates : 108 		 SurvivalMonths : 41.5 		 Average Reward : 675.21
+Updates : 110 		 SurvivalMonths : 46.5 		 Average Reward : 810.71
+Updates : 112 		 SurvivalMonths : 50.5 		 Average Reward : 874.81
+Updates : 114 		 SurvivalMonths : 46.5 		 Average Reward : 653.97
+Updates : 116 		 SurvivalMonths : 39.5 		 Average Reward : 732.53
+Updates : 118 		 SurvivalMonths : 43.5 		 Average Reward : 709.71
+Updates : 120 		 SurvivalMonths : 43.0 		 Average Reward : 799.62
+Updates : 122 		 SurvivalMonths : 41.0 		 Average Reward : 752.23
+Updates : 124 		 SurvivalMonths : 49.0 		 Average Reward : 857.63
+Updates : 126 		 SurvivalMonths : 27.0 		 Average Reward : 347.68
+Updates : 128 		 SurvivalMonths : 43.5 		 Average Reward : 791.51
+Updates : 130 		 SurvivalMonths : 46.0 		 Average Reward : 794.88
+Updates : 132 		 SurvivalMonths : 33.0 		 Average Reward : 493.01
+Updates : 134 		 SurvivalMonths : 44.5 		 Average Reward : 665.46
+Updates : 136 		 SurvivalMonths : 46.0 		 Average Reward : 695.3
+Updates : 138 		 SurvivalMonths : 44.0 		 Average Reward : 642.47
+Updates : 140 		 SurvivalMonths : 48.0 		 Average Reward : 884.75

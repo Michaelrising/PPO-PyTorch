@@ -33,7 +33,7 @@ class CancerControl(gym.Env, ABC):
         self.gamma = 0.99  # RL discount factor
         # observation space is a continuous space
         low = np.array([0., 0., 0., -1, -1, -1, 0], dtype=np.float32)
-        high = np.array([1,1,1, 1, 1, 1, 1], dtype=np.float32)
+        high = np.array([1, 1, 1, 1, 1, 1, 1], dtype=np.float32)
         self.observation_space = spaces.Box(low=low, high=high)
         self.treatOnOff = 1  # default On and changes in every step function
         self.cpa = np.array([0, 50, 100, 150, 200])
@@ -87,10 +87,10 @@ class CancerControl(gym.Env, ABC):
         self.cancerode.ts = ts
         # normalization the drug concentration
         self.cancerode.drug = drug * np.array([1 / 200, 1 / 7.5])
-        y0 = self.states
+        y0 = self.states.copy()
         # dose = torch.from_numpy(dose_)
         t_interval = (int(self.t), int(self.t) + 28 - 1)
-        out = solve_ivp(self.cancerode.forward, t_span=t_interval, y0=y0, t_eval=ts, method="DOP853")
+        out = solve_ivp(self.cancerode.forward, t_span=t_interval, y0=y0, t_eval=ts, method="DOP853") #,  atol=1e-7, rtol=1e-5)
         # out = Solve_ivp.solver(self.cancerode.forward, ts = ts, y0 = y0, params = (), atol=1e-08, rtol = 1e-05)
         dy = self.cancerode.forward(t = int(self.t) + 28 - 1, y = out.y[:,-1].reshape(-1))
         return out.y, dy
@@ -137,24 +137,21 @@ class CancerControl(gym.Env, ABC):
 
 
         evolution, df = self.CancerEvo(dose_)
-        self.states = evolution[:, -1]
+        self.states = evolution[:, -1].clip(np.array([10, 10, 0])).copy()
         x, psa = self.states[0:2], self.states[-1]
         t_current = self.t + 28
         self.t = t_current
         self._action = action
         phi1, c2 = self._utilize(self.t, action)
         # reward
-        # threshold1 = bool(sum(x)/sum(self.init_states[:2]) < 0.25) * (1 - sum(x)/sum(self.init_states[:2]))
-        # threshold2 = bool(sum(x)/sum(self.init_states[:2]) > 0.5) * (sum(x)/sum(self.init_states[:2]))
-        # reward = self.weight1[0] * threshold1 - self.weight1[1] * threshold2
         reward = 0
         metastasis_ai = bernoulli.rvs((x[1]/self.K[1])**1.5, size=1).item() if 1 > x[1]/self.K[1] > self.m1 else 0
         self.metastasis_ai_deque.append(metastasis_ai)
         metastasis_ad = bernoulli.rvs((x[0] / self.K[0])**1.5, size=1).item() if 1 > x[0]/self.K[0] > self.m1 else 0
         self.metastasis_ad_deque.append(metastasis_ad)
         done = bool(
-            x[0] >= self.K[0]
-            or x[1] >= self.K[1]
+            x[0] > self.K[0]
+            or x[1] >= 0.9 * self.K[1]
             # or x[1] / x[0] > 20 # from the patients original data
             # or bool(self.LEU_On and dose_[1] != 0)
             # or bool(sum(x) > sum(self.init_states[:2]))
@@ -176,13 +173,13 @@ class CancerControl(gym.Env, ABC):
         l_dose = (dosages[- self.drug_penalty_length:, 1]*d_decay).sum() / 7.5
         d = np.array([c_dose, l_dose])
         drug_penalty = sum(self.base**self.drug_penalty_index * d * np.array([.6, .4])) # (self.base**self.penalty_index -1) *
-        reward += 5*(r_shape + c2) - drug_penalty + self.steps + 1
+        reward += 5*(r_shape + .5 * c2) - drug_penalty + (self.steps + 1)
         # reward += self.reward_index * 0.5
         if done:
             drug_penalty = 0
             dosage = np.array([0.6, 0.4]) * np.array(self.dosage_arr).sum(axis = 0)/np.array([200, 7.5])
             # reward -= sum(dosage)
-            reward -= self.max_episodes_steps - self.steps + dosage.sum()
+            reward -= (self.max_episodes_steps - self.steps) + dosage.sum()
         # reward *= self.steps/self.max_episodes_steps
         self.steps += 1
         normalized_states = np.log10(self.states) / np.log10(self.normalized_coef)
@@ -194,6 +191,7 @@ class CancerControl(gym.Env, ABC):
                 normalized_df[i] = (-np.log10(-dx) - 1) / np.log10(self.normalized_coef[i])
             else:
                 normalized_df[i] = dx/np.log10(self.normalized_coef[i])
+        metastasis = np.array([self.metastasis_ad_deque.count(1), self.metastasis_ai_deque.count(1)])/self.m2
         fea = np.concatenate((normalized_states, normalized_df, np.array([self.steps/self.max_episodes_steps]))).reshape(-1)
         return fea, self.states, reward, done, {"evolution": evolution, "dose": dose_}
 
@@ -222,7 +220,8 @@ class CancerControl(gym.Env, ABC):
         return potential, c2
 
     def seed(self, seed=None):
-        _, _ = seeding.np_random(seed)
+        np.random.seed(seed)
+        # _, _ = seeding.np_random(seed)
         return
 
     def reset(self):
@@ -240,8 +239,7 @@ class CancerControl(gym.Env, ABC):
                 normalized_df[i] = (-np.log10(-dx) - 1) / np.log10(self.normalized_coef[i])
             else:
                 normalized_df[i] = dx / np.log10(self.normalized_coef[i])
-        fea = np.concatenate(
-            (normalized_states, normalized_df, np.array([self.steps / self.max_episodes_steps]))).reshape(-1)
+
         # normalized_df = self.cancerode.forward(t = 0, y = self.states.reshape(-1)) # /self.normalized_coef
         # normalized_states = self.states # /self.normalized_coef
         # fea = np.concatenate((normalized_states, normalized_df, np.array([self.steps/self.max_episodes_steps]))).reshape(-1)
@@ -252,6 +250,10 @@ class CancerControl(gym.Env, ABC):
         self.drug_penalty_index = 0
         self.metastasis_ad_deque.clear()
         self.metastasis_ai_deque.clear()
+        metastasis = np.array([self.metastasis_ad_deque.count(1), self.metastasis_ai_deque.count(1)]) / self.m2
+        fea = np.concatenate(
+            (normalized_states, normalized_df, np.array([self.steps / self.max_episodes_steps]))).reshape(
+            -1)
         self.leu_on = False
         return fea, self.states
 
@@ -275,11 +277,14 @@ class CancerODEGlv:
         self.A[0, 1] = 1 / (1 + np.exp(-self.pars[-3] * np.array([t / 28 / 12])))
         gamma = 0.25
 
-        x = y[0:2]  # cell count
-        p = y[-1]  # psa level
+        x = y[0:2] #.clip(10)  # cell count
+        p = y[-1] # .clip(0)  # psa level
         index = np.where(np.int(t) == self.ts)[0][0] if (np.int(t) <= self.ts).any() else -1
         drug = self.drug[index].reshape(-1)
         dxdt = np.multiply(r * x, (1 - (x @ self.A / self.K) ** phi -drug @ Beta))
+        # dxdt_ = dxdt.copy()
+        # dxdt_[x<0] = 0
+        # dxdt = dxdt if (x>0).all() else dxdt_
         dpdt = betac @ x * self.cell_size - gamma * p
         # mutation: we assume the mutation rate is 4%, with 5 or more mutations wil become new AI cells
         df = np.append(dxdt, dpdt)

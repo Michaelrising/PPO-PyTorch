@@ -154,7 +154,7 @@ def train(args):
 
     decay_step_size = 500
     decay_ratio = 0.5
-    grad_clamp = 0.5
+    grad_clamp = 0.2
     update_timestep = 2         # update policy every n epoches
     K_epochs = 4                # update policy for K epochs in one PPO update
     mini_batch = 256
@@ -163,7 +163,7 @@ def train(args):
     gamma = 0.99            # discount factor
 
     lr_actor = 0.00003      # learning rate for actor network
-    lr_critic = 0.0001      # learning rate for critic network
+    lr_critic = 0.00001      # learning rate for critic network
 
     random_seed = args.seed # set random seed if required (0 = no random seed)
 
@@ -190,7 +190,7 @@ def train(args):
     # default_acts = np.array(default_acts)
     #
     # default_action = np.array(default_acts[:, 0], dtype=np.int)
-    weight = np.ones(2) / 2
+    weight = np.array([1, 3]) / 4
     base = 1.125
     m1 = args.m1
     m2 = args.m2
@@ -225,7 +225,7 @@ def train(args):
     if not os.path.exists(log_dir):
           os.makedirs(log_dir)
     t = datetime.now().strftime("%Y%m%d-%H%M")
-    summary_dir = log_dir + '/' + str(patientNo) + '/' + str(t) + "-num_env-" + str(num_env) + "-k_epoch-" + str(K_epochs) + "-drug_decay-" + str(drug_decay)
+    summary_dir = log_dir + '/' + str(patientNo) + '/' + str(t) + "-num_env-" + str(num_env) + "-seed-" + str(random_seed) + "-m1-" + str(m1) + "-m2-" + str(m2)
     writer = SummaryWriter(log_dir=summary_dir)
 
 
@@ -261,7 +261,7 @@ def train(args):
         os.makedirs(checkpoint_path + "final")
     if not os.path.exists(checkpoint_path + "best"):
         os.makedirs(checkpoint_path + "best")
-    checkpoint_format = patientNo+ "_" + str(t) + "_PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    checkpoint_format = patientNo +str(t)+"-m1-" + str(m1) + "-m2-" + str(m2) + "_PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained) #  "-m1-" + str(m1) + "-m2-" + str(m2)
     print("save checkpoint path : " + checkpoint_path)
     print("save checkpoint format : " + checkpoint_format)
 
@@ -319,6 +319,7 @@ def train(args):
         for i in range(num_env):
             envs[i].seed(random_seed)
         np.random.seed(random_seed)
+        test_env.seed(random_seed)
 
     #####################################################
 
@@ -342,7 +343,7 @@ def train(args):
         decay_ratio,
         action_std)
 
-
+    # ppo_agent.load("./PPO_preTrained/gym_cancer:CancerControl-v0/patient011/final/patient011-m1-0.5-m2-3_PPO_gym_cancer:CancerControl-v0_0_0.pth")
     # track total training time
     start_time = datetime.now().replace(microsecond=0)
     print("Started training at (GMT) : ", start_time)
@@ -362,7 +363,7 @@ def train(args):
     for i_update in range(max_updates):
         survival_month = 0
         for i, env in enumerate(envs):
-            eps = max(- max(i_update - 2000, 0) * (explore_eps - 0.3)/20000 + explore_eps, 0.3)
+            eps = max(- max(i_update - 4000, 0) * (explore_eps - 0.3)/24000 + explore_eps, 0.3)
             determine = np.random.choice(2, p=[1 - eps, eps])  # explore epsilon
             fea, _ = env.reset()
             ep_rewards[i] = 0
@@ -520,7 +521,7 @@ if __name__ == '__main__':
     parser.add_argument('--patients_pars', type=dict, default=patient_pars)
     parser.add_argument('--patients_train', type=list, default=patient_train)
     parser.add_argument('--number', '-n', type=int, help='Patient No., int type, requested',
-                        default=12)  # the only one argument needed to be inputted
+                        default=11)  # the only one argument needed to be inputted
     parser.add_argument('--num_env', type=int, help='number of environments',
                         default=2)
     parser.add_argument('--max_updates', type=int, help='max number of updating times',
