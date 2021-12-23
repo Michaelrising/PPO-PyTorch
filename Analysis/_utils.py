@@ -19,6 +19,89 @@ import seaborn as sns
 from PPO import PPO
 from brokenaxes import brokenaxes
 from matplotlib.gridspec import GridSpec
+import matplotlib.patches as mpatches
+import matplotlib
+
+
+class AnyObject:
+    pass
+
+
+class AnyObjectHandler:
+    def __init__(self, color, alpha = 0.5, _hatch = '///', marker = None):
+        self.color = color
+        self.alpha = alpha
+        self.hatch = _hatch
+        self.maker = marker
+    def legend_artist(self, legend, orig_handle, fontsize,  handlebox):
+        x0, y0 = handlebox.xdescent, handlebox.ydescent
+        width, height = handlebox.width, handlebox.height
+        patch = mpatches.Rectangle([x0, y0], width, height, facecolor=self.color,hatch = self.hatch, alpha = self.alpha,
+                                   transform=handlebox.get_transform())
+        handlebox.add_artist(patch)
+        return patch
+
+
+class AnyObjectHandler_marker:
+    def __init__(self,  marker = None):
+        self.marker = marker
+    def legend_artist(self, legend, orig_handle, fontsize,  handlebox):
+        x0, y0 = handlebox.xdescent, handlebox.ydescent
+        width, height = handlebox.width, handlebox.height
+        marker = matplotlib.markers.MarkerStyle(marker = self.marker)
+        # patch = mpatches.Rectangle([x0, y0], width, height, facecolor=self.color,marker = self.marker,
+        #                            transform=handlebox.get_transform())
+        handlebox.add_artist(marker)
+        return marker
+
+# class AnyObjectHandler1:
+#     def legend_artist(self, legend, orig_handle, fontsize,  handlebox):
+#         x0, y0 = handlebox.xdescent, handlebox.ydescent -1
+#         width, height = handlebox.width, handlebox.height
+#         patch = mpatches.Rectangle([x0, y0], width, height,  facecolor=onColor,
+#                                    transform=handlebox.get_transform())
+#         handlebox.add_artist(patch)
+#         return patch
+#
+#
+# class AnyObjectHandler12:
+#     def legend_artist(self, legend, orig_handle, fontsize,  handlebox):
+#         x0, y0 = handlebox.xdescent, handlebox.ydescent -1
+#         width, height = handlebox.width, handlebox.height
+#         patch = mpatches.Rectangle([x0, y0], width, height,  facecolor=onColor, alpha = 0.4,
+#                                    transform=handlebox.get_transform())
+#         handlebox.add_artist(patch)
+#         return patch
+#
+#
+# class AnyObjectHandler2:
+#     def legend_artist(self, legend, orig_handle, fontsize,  handlebox):
+#         x0, y0 = handlebox.xdescent, handlebox.ydescent-2
+#         width, height = handlebox.width, handlebox.height
+#         patch = mpatches.Rectangle([x0, y0], width, height, facecolor=onLeu, hatch = "///",alpha = 0,
+#                                    transform=handlebox.get_transform())
+#         handlebox.add_artist(patch)
+#         return patch
+#
+#
+# class AnyObjectHandler3:
+#     def legend_artist(self, legend, orig_handle, fontsize, handlebox):
+#         x0, y0 = handlebox.xdescent, handlebox.ydescent-3
+#         width, height = handlebox.width, handlebox.height
+#         patch = mpatches.Rectangle([x0, y0], width, height, facecolor=offColor,
+#                                    transform=handlebox.get_transform())
+#         handlebox.add_artist(patch)
+#         return patch
+#
+#
+# class AnyObjectHandler32:
+#     def legend_artist(self, legend, orig_handle, fontsize, handlebox):
+#         x0, y0 = handlebox.xdescent, handlebox.ydescent-3
+#         width, height = handlebox.width, handlebox.height
+#         patch = mpatches.Rectangle([x0, y0], width, height, facecolor=offColor,alpha = 0.4,
+#                                    transform=handlebox.get_transform())
+#         handlebox.add_artist(patch)
+#         return patch
 
 
 def customSmooth(datadir, smoothdir, weight=0.85, json_name = None, csv_name = None):

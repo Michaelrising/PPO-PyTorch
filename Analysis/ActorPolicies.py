@@ -18,7 +18,7 @@ import gym
 import random
 import torch
 import pandas as pd
-from PPO import ActorCritic
+from PPO import PPO
 
 
 def exploit(actor, state):

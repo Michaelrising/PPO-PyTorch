@@ -261,7 +261,7 @@ def train(args):
         os.makedirs(checkpoint_path + "final")
     if not os.path.exists(checkpoint_path + "best"):
         os.makedirs(checkpoint_path + "best")
-    checkpoint_format = patientNo +str(t)+"-m1-" + str(m1) + "-m2-" + str(m2) + "_PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained) #  "-m1-" + str(m1) + "-m2-" + str(m2)
+    checkpoint_format = patientNo +"_"+str(t)+"-m1-" + str(m1) + "-m2-" + str(m2) + "_PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained) #  "-m1-" + str(m1) + "-m2-" + str(m2)
     print("save checkpoint path : " + checkpoint_path)
     print("save checkpoint format : " + checkpoint_format)
 

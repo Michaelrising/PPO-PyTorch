@@ -10,7 +10,7 @@ import gym
 from env.gym_cancer.envs.cancercontrol import CancerControl
 import matplotlib.pyplot as plt
 # import pybullet_envs
-
+import seaborn as sns
 from PPO import PPO
 
 
@@ -41,53 +41,56 @@ def plot_figure(data, save_path, par = 0):
         save_name = '_best_reward.png'
     states = data["states"]
     doses = data["doses"]
+    cs = sns.color_palette('Paired')
     x = np.arange(states.shape[0]) * 28
     ad = states[:, 0]
     ai = states[:, 1]
     psa = states[:, 2]
     fig = plt.figure(figsize=(15, 5))
-    plt.style.use("seaborn")
+    plt.style.use('seaborn')
+    plt.style.use(['science', "nature"])
     ax1 = fig.add_subplot(1, 2, 1)
-    ax1.plot(x, psa, linestyle="-", linewidth=1)
+    ax1.plot(x, psa, linestyle="-", linewidth=2)
     # plt.scatter(x, psa, color=colors)
-    ax1.set_xlabel("Time (Days)")
-    ax1.set_ylabel("PSA level (ug/ml)")
+    ax1.set_xlabel("Time (Days)",  fontsize=20)
+    ax1.set_ylabel("PSA level (ug/L)",  fontsize=20)
+    ax1.tick_params(labelsize = 20)
 
     ax2 = fig.add_subplot(1, 2, 2)
-    ax2.plot(x, ad,  linewidth=1, label="HD")
-    ax2.plot(x, ai, linewidth=1, label="HI")
-    ax2.set_xlabel("Time (Days)")
-    ax2.set_ylabel("Cell counts")
-    ax2.legend(loc='upper right')
-    plt.savefig(save_path + "/Evolution" + save_name, dpi=300)
+    ax2.plot(x, ad, label="HD", c = cs[1], lw=2)
+    ax2.plot(x, ai, label="HI", c = cs[0], lw=2)
+    ax2.set_xlabel("Time (Days)",  fontsize=20)
+    ax2.set_ylabel("Cell counts",  fontsize=20)
+    ax2.tick_params(labelsize=20)
+    ax2.legend(loc='upper right',  fontsize=20)
+    plt.savefig(save_path + "_evolution" + save_name, dpi=300)
     plt.close()
 
-    COLOR_CPA = "#69b3a2"
-    COLOR_LEU = '#FF4500'
+    COLOR_CPA = cs[0]
+    COLOR_LEU = cs[1]
     x_dose = np.arange(0, doses.shape[0]) * 28
     fig = plt.figure(figsize=(7.5, 5))
     ax1 = fig.add_subplot(111)
     ax2 = ax1.twinx()
-    ax1.plot(x_dose, doses[:,0], color=COLOR_CPA, label='CPA', lw=1.5)
-    ax1.set_xlabel("Days")
-    ax1.set_ylabel("CPA (mg/ Day)", fontsize=14)
+    ax1.plot(x_dose, doses[:,0], color=COLOR_CPA, label='CPA', lw=2)
+    ax1.set_xlabel("Days",  fontsize=20)
+    ax1.set_ylabel("CPA (mg/ Day)", fontsize=20)
     # ax1.set_ylim(-5, 205)
-    ax1.set_yticks(np.arange(0, 250, 50))
-    ax1.tick_params(axis="y", labelcolor=COLOR_CPA)
-    ax1.legend(loc=(0.03, 0.9), fontsize=14, facecolor=COLOR_CPA)
+    ax1.set_yticks(np.arange(0, 250, 50),  fontsize=20)
+    ax1.tick_params(axis="y", labelcolor=COLOR_CPA,  labelsize=20)
+    ax1.legend(loc=(0.03, 0.9), fontsize=20, facecolor=COLOR_CPA)
     plt.grid(False)
-    ax2.plot(x_dose, doses[:, 1], color=COLOR_LEU, label='LEU', lw=1.5, ls='--')
-    ax2.set_ylabel("LEU (ml/ Month)", fontsize=14)
-    ax2.tick_params(axis="y", labelcolor=COLOR_LEU)
-    ax2.set_yticks(np.arange(0, 22.5, 7.5))
+    ax2.plot(x_dose, doses[:, 1], color=COLOR_LEU, label='LEU', lw=2, ls='--')
+    ax2.set_ylabel("LEU (ml/ Month)", fontsize=20)
+    ax2.tick_params(axis="y", labelcolor=COLOR_LEU, labelsize=20)
+    ax2.set_yticks(np.arange(0, 22.5, 7.5),  fontsize=20)
     plt.ylim(-.5, 15)
-    ax2.legend(loc=(0.03, 0.8), fontsize=14, facecolor=COLOR_LEU)
-    plt.savefig(save_path+'/Dosages' + save_name, dpi=300)
+    ax2.legend(loc=(0.03, 0.8), fontsize=20, facecolor=COLOR_LEU)
+    plt.savefig(save_path+'_dosages' + save_name, dpi=300)
     plt.close()
     return
 
-
-def test(args):
+def test(args, file, group = 'resistance'):
     ####### initialize environment hyperparameters ######
 
     env_name = args.env_id  # "RoboschoolWalker2d-v1"
@@ -150,7 +153,7 @@ def test(args):
     #
     # default_action = np.array(default_acts[:, 0], dtype=np.int)
     weight = np.ones(2) / 2
-    base = 1.15
+    base = 1.125
     m1 = args.m1
     m2 = args.m2
     drug_decay = args.drug_decay
@@ -194,13 +197,8 @@ def test(args):
 
     best_directory = "PPO_preTrained" + '/' + env_name + '/' + patientNo + "/" + "final/"
     best_name = os.listdir(best_directory)
-    # tempT = []
-    # for name in best_name:
-    #     checkpoint_path = best_directory + name
-    #     t = os.path.getctime(checkpoint_path)
-    #     tempT.append(t)
-    # index = tempT.index(max(tempT))
     checkpoint_path = best_directory + max(best_name) # "PPO_{}_{}_{}.pth".format(env_name, random_seed, run_num_pretrained)
+    checkpoint_path = "PPO_preTrained/" + group + "_group/" + file
     print("loading network from : " + checkpoint_path)
 
     ppo_agent.load(checkpoint_path)
@@ -248,15 +246,21 @@ def test(args):
     # maximum rewards
     High_reward = {"states": record_states_high_reward, "doses": record_dose_high_reward}
     High_survival = {"states": record_states_high_survival_time, "doses": record_dose_survival_month}
-    if not os.path.exists("./PPO_figs/converge/" + patientNo):
-        os.makedirs("./PPO_figs/converge/" + patientNo )
-    if not os.path.exists("./PPO_policy/"):
-        os.makedirs("./PPO_policy/")
-    savepath = "./PPO_figs/converge/" + patientNo
+    if not os.path.exists("./PPO_figs/" + group + "_group/"):
+        os.makedirs("./PPO_figs/"+ group + "_group/")
+    if not os.path.exists("./PPO_policy/" + group + "_group/"):
+        os.makedirs("./PPO_policy/" + group + "_group/")
+    if not os.path.exists("./PPO_states/" + group + "_group/"):
+        os.makedirs("./PPO_states/" + group + "_group/")
+    savepath = "./PPO_figs/" + group + "_group/" +patientNo
     plot_figure(High_reward, savepath , 0)
     plot_figure(High_survival, savepath, 1)
-    pd.DataFrame(record_dose_high_reward).to_csv("./PPO_policy/converge/" + patientNo + "_converge_high_reward_dosages.csv")
-    pd.DataFrame(record_dose_survival_month).to_csv("./PPO_policy/converge/" + patientNo + "_converge_high_survival_dosages.csv")
+    pd.DataFrame(record_states_high_reward).to_csv(
+        "./PPO_states/" + group + "_group/" + patientNo + "_converge_high_reward_states.csv")
+    pd.DataFrame(record_states_high_survival_time).to_csv(
+        "./PPO_states/" + group + "_group/" + patientNo + "_converge_high_survival_states.csv")
+    pd.DataFrame(record_dose_high_reward).to_csv("./PPO_policy/" + group + "_group/" + patientNo + "_converge_high_reward_dosages.csv")
+    pd.DataFrame(record_dose_survival_month).to_csv("./PPO_policy/" + group + "_group/" + patientNo + "_converge_high_survival_dosages.csv")
     print("============================================================================================")
 
     avg_test_reward = test_running_reward / total_test_episodes
@@ -264,8 +268,6 @@ def test(args):
     print("average test reward : " + str(avg_test_reward))
 
     print("============================================================================================")
-
-
 
 
 if __name__ == '__main__':
@@ -319,15 +321,22 @@ if __name__ == '__main__':
     print("============================================================================================")
 
     device = set_device() if args.cuda_cpu == "cpu" else set_device(args.cuda)
-
-    for patient in patient_train:
-        patient = "patient056"
-        Number = int(patient[-3:])
+    resistance_group = os.listdir('./PPO_preTrained/resistance_group')
+    response_group = os.listdir('./PPO_preTrained/response_group')
+    long_response_group = os.listdir('./PPO_preTrained/long_response_group')
+    for file in response_group:
+        Number = int(file[7:10])
         args.number = Number
-        print(patient)
-        try:
-            test(args)
-        except ValueError:
-            pass
-        except AttributeError:
-            pass
+        print(Number)
+        test(args, file, "response")
+
+    for file in resistance_group:
+        Number = int(file[7:10])
+        args.number = Number
+        print(Number)
+        test(args, file, 'resistance')
+    for file in long_response_group:
+        Number = int(file[7:10])
+        args.number = Number
+        print(Number)
+        test(args, file, 'long_response')

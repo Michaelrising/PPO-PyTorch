@@ -5,7 +5,7 @@ Created on Thu Feb 18 15:45:32 2021
 
 @author: michael
 """
-
+from datetime import datetime
 import torch
 import xitorch
 import numpy as np
@@ -17,7 +17,7 @@ from torch import nn, optim
 from LoadData import LoadData
 import shutil
 from _utils import EarlyStopping
-
+from torch.utils.tensorboard import SummaryWriter
 from typing import Callable, Union, Mapping, Any, Sequence, Optional
 from xitorch._utils.assertfuncs import assert_fcn_params, assert_runtime
 from xitorch._core.pure_function import get_pure_function, make_sibling
@@ -445,6 +445,7 @@ def clip_grad(grad, max_norm: float, norm_type: float = 2.0) -> torch.Tensor:
 from collections import deque
 
 def train_glv(args, alldata):
+
     i = args.number
     fail_deque =  deque(maxlen = 10)
     alpha = 0.25 #Alpha[i]
@@ -460,6 +461,7 @@ def train_glv(args, alldata):
     else:
         patientNo = "patient" + str(i)
     print(patientNo)
+
     # PARS = np.array(pd.read_csv("PARS.csv"), dtype=np.float).reshape(-1)
     # if patientNo in ["patient012","patient015" ,"patient006"]:
     #     continue
@@ -546,11 +548,11 @@ def train_glv(args, alldata):
     optimizer = torch.optim.Adam([cancerode.pars], lr = .001)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size =1000, gamma=0.8)
     # initialize the early_stopping object
-    early_stopping = EarlyStopping(patience=10)
+    early_stopping = EarlyStopping(patience=15)
     if not os.path.exists("./analysis-sigmoid"):
         os.mkdir("./analysis-sigmoid")
-    if not os.path.exists("./analysis-sigmoid/model_infos"):
-        os.makedirs("./analysis-sigmoid/model_infos")
+    if not os.path.exists("./analysis-sigmoid/model_infos/" + patientNo):
+        os.makedirs("./analysis-sigmoid/model_infos/" + patientNo)
     if not os.path.exists("./analysis-sigmoid/model_plots/" + patientNo):
         # shutil.rmtree("./retrain-sigmoid/model_plots/" + patientNo)
         os.makedirs("./analysis-sigmoid/model_plots/" + patientNo)
@@ -559,6 +561,9 @@ def train_glv(args, alldata):
     if not os.path.exists("./analysis-sigmoid/model_validate"):
         os.makedirs("./analysis-sigmoid/model_validate")
     log = []
+    t = datetime.now().strftime("%Y%m%d-%H%M")
+    summary_dir = "./analysis-sigmoid/model_infos" + '/' + str(patientNo) + '/' + str(t) + "/" +str(args.t)
+    writer = SummaryWriter(log_dir=summary_dir)
     for epoch in range(Epoch):
         Init = torch.tensor([mean_v/mean_psa * PSA[0]/cell_size, 1e-4 * K2, PSA[0]], dtype=torch.float)
         _loss = loss.detach().numpy()
@@ -624,11 +629,13 @@ def train_glv(args, alldata):
             p = res[:, 2]
             val_psa = p[validate_days]
             validate_loss = np.mean((val_psa - validate_psa) ** 2)
-            log.append([epoch, loss.detach().numpy().item(), validate_loss])
-            if epoch % 50 == 0:
-                file_writing_obj = open('./analysis-sigmoid/model_infos/infos-' + patientNo + "-" + str(args.t) + '.txt', 'w')
-                file_writing_obj.write(str(log))
-                file_writing_obj.close()
+            # log.append([epoch, loss.detach().numpy().item(), validate_loss])
+            writer.add_scalar('Loss', loss.detach().numpy().item(), epoch)
+            writer.add_scalar('V-Loss', validate_loss, epoch)
+            # if epoch % 50 == 0:
+            #     file_writing_obj = open('./analysis-sigmoid/model_infos/infos-' + patientNo + "-" + str(args.t) + '.txt', 'w')
+            #     file_writing_obj.write(str(log))
+            #     file_writing_obj.close()
                 #print('Epoch: {} \t Loss: {:.2f} \t Val_Loss: {:.2f}'.format(epoch, loss.detach().numpy().item(), validate_loss))
             if epoch % 100 == 0:
                 x = inputs.detach().numpy()
@@ -653,7 +660,7 @@ def train_glv(args, alldata):
                 plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/Cell_AI_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
                 # plt.show()
                 plt.close()
-        if epoch > 1000:
+        if epoch > 2000:
             early_stopping(validate_loss, pars)
         if early_stopping.early_stop:
             print("Early stopping")
