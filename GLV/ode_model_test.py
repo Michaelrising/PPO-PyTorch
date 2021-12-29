@@ -556,8 +556,8 @@ def train_glv(args, alldata):
     if not os.path.exists("./analysis-sigmoid/model_plots/" + patientNo):
         # shutil.rmtree("./retrain-sigmoid/model_plots/" + patientNo)
         os.makedirs("./analysis-sigmoid/model_plots/" + patientNo)
-    if not os.path.exists("./analysis-sigmoid/model_pars"):
-        os.makedirs("./analysis-sigmoid/model_pars")
+    if not os.path.exists("./analysis-sigmoid/model_pars/" + patientNo):
+        os.makedirs("./analysis-sigmoid/model_pars/" + patientNo)
     if not os.path.exists("./analysis-sigmoid/model_validate"):
         os.makedirs("./analysis-sigmoid/model_validate")
     log = []
@@ -660,6 +660,16 @@ def train_glv(args, alldata):
                 plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/Cell_AI_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
                 # plt.show()
                 plt.close()
+                A1 = A.detach().numpy().reshape(-1)
+                K1 = K.detach().numpy()
+                terminate = res[-1]
+                init = Init.detach().numpy()
+                states1 = np.append(init, terminate)
+                pars_detach = pars.detach().numpy()
+                plist = [A1, K1, states1, pars_detach, best_pars]
+                plist_df = pd.DataFrame(plist)
+                plist_df.to_csv("./analysis-sigmoid/model_pars/"+patientNo+"/Args_" + str(args.t) + "-" + patientNo + ".csv",
+                                index=False)
         if epoch > 2000:
             early_stopping(validate_loss, pars)
         if early_stopping.early_stop:
