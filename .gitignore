@@ -1,6 +1,7 @@
 *.png
 *.log
 *.csv
+*.txt
 events.out.tfevents*
 ./GLV/analysis-sigmoid
 ./PPO_logs
