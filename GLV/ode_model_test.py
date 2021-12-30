@@ -500,7 +500,7 @@ def train_glv(args, alldata):
         else:
             break
         validate_set.append(loo)
-    validate_days = np.array(validate_set, dtype=np.int)
+    validate_days = np.array(validate_set, dtype=np.int32)
     validate_psa = PSA[np.isin(DAYS, validate_set)].detach().numpy()
     train_days = DAYS[~np.isin(DAYS, validate_set)]
     train_slice = np.digitize(treatInt, train_days, right=True)
@@ -562,7 +562,7 @@ def train_glv(args, alldata):
         os.makedirs("./analysis-sigmoid/model_validate")
     log = []
     t = datetime.now().strftime("%Y%m%d-%H%M")
-    summary_dir = "./analysis-sigmoid/model_infos" + '/' + str(patientNo) + '/' + str(t) + "/" +str(args.t)
+    summary_dir = "./analysis-sigmoid/model_infos" + '/' + str(patientNo) + '/' + str(t) + "/" + str(args.t)
     writer = SummaryWriter(log_dir=summary_dir)
     for epoch in range(Epoch):
         Init = torch.tensor([mean_v/mean_psa * PSA[0]/cell_size, 1e-4 * K2, PSA[0]], dtype=torch.float)
@@ -571,6 +571,7 @@ def train_glv(args, alldata):
         loss = torch.zeros(1, dtype=torch.float)
 
         res = Init.detach().numpy().reshape(1, -1)
+        optimizer.zero_grad()
         for ii in range(len(treatInt) - 1):
             if ii == len(treatInt) - 2:
                 INPUTS = inputs[int(treatInt[ii]):]
@@ -594,14 +595,15 @@ def train_glv(args, alldata):
             if ii % 2 == 1:
                 weights = torch.linspace(start=n_psa, end=1, steps=n_psa)
             weights = weights/sum(weights)
-            loss = MSEloss_weight(EST_PSA, psa, weights) + loss
+            loss = MSEloss_weight(EST_PSA, psa, weights) #+ loss
+            loss.backward(retain_graph=True if ii != len(treatInt) - 2 else False)
 
         # pars_grad = torch.autograd.grad(loss, (cancerode.pars,))[0]
         # clip_grad(pars_grad, max_norm=10);
         # velocity = momentum * velocity - learning_rate * pars_grad # pars_grad
         # pars = pars.add(velocity)  # .detach().requires_grad_()
-        optimizer.zero_grad()
-        loss.backward()
+        # optimizer.zero_grad()
+        # loss.backward()
         torch.nn.utils.clip_grad_norm_(pars, max_norm = 100 * (1.001 - epoch/Epoch))
         optimizer.step()
         with torch.no_grad():
@@ -614,6 +616,7 @@ def train_glv(args, alldata):
         flag_pars = pars_grad.detach().numpy()[-3]
         # avoiding over-fitted
         loss_deque.append(_loss)
+        print(pars.detach().numpy())
         loss_array = np.array(loss_deque, dtype=np.float).reshape(-1)
         if epoch > 10:
             loss_decay_mask = sum((loss_array[1:] - loss_array[:-1]) / loss_array[:-1] > 0)
@@ -638,28 +641,28 @@ def train_glv(args, alldata):
             #     file_writing_obj.close()
                 #print('Epoch: {} \t Loss: {:.2f} \t Val_Loss: {:.2f}'.format(epoch, loss.detach().numpy().item(), validate_loss))
             if epoch % 100 == 0:
-                x = inputs.detach().numpy()
-                plt.scatter(DAYS, PSA, color="black", marker="*", alpha=0.6)
-                plt.plot(x, p, color="black", linestyle="-", linewidth=1)
-                plt.xlabel("Time (Days)" )
-                plt.ylabel("PSA level (ug/ml)")
-                plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/PSA_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
-                # plt.show()
-                plt.close()
-                plt.plot(x, ad, color="black", linestyle="--", linewidth=1, label="AD")
-                plt.plot(x, ai, color="black", linestyle="-.", linewidth=1, label="AI")
-                plt.xlabel("Time (Days)")
-                plt.ylabel("Cell counts")
-                plt.legend(loc='upper right')
-                plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/Cell_All_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
-                # plt.show()
-                plt.close()
-                plt.plot(x, ai, color="black", linestyle="-.", linewidth=1, label="AI")
-                plt.xlabel("Time (Days)")
-                plt.ylabel("Cell counts")
-                plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/Cell_AI_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
-                # plt.show()
-                plt.close()
+                # x = inputs.detach().numpy()
+                # plt.scatter(DAYS, PSA, color="black", marker="*", alpha=0.6)
+                # plt.plot(x, p, color="black", linestyle="-", linewidth=1)
+                # plt.xlabel("Time (Days)" )
+                # plt.ylabel("PSA level (ug/ml)")
+                # plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/PSA_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
+                # # plt.show()
+                # plt.close()
+                # plt.plot(x, ad, color="black", linestyle="--", linewidth=1, label="AD")
+                # plt.plot(x, ai, color="black", linestyle="-.", linewidth=1, label="AI")
+                # plt.xlabel("Time (Days)")
+                # plt.ylabel("Cell counts")
+                # plt.legend(loc='upper right')
+                # plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/Cell_All_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
+                # # plt.show()
+                # plt.close()
+                # plt.plot(x, ai, color="black", linestyle="-.", linewidth=1, label="AI")
+                # plt.xlabel("Time (Days)")
+                # plt.ylabel("Cell counts")
+                # plt.savefig("./analysis-sigmoid/model_plots/"+patientNo+"/Cell_AI_" + str(args.t) + "-" + patientNo + "_" + str(epoch) + ".png", dpi=100)
+                # # plt.show()
+                # plt.close()
                 A1 = A.detach().numpy().reshape(-1)
                 K1 = K.detach().numpy()
                 terminate = res[-1]
@@ -686,7 +689,7 @@ def train_glv(args, alldata):
     validate_loss = np.array([sum((pred_validate_psa - validate_psa)**2)], dtype = np.float)
     validate_list = [validate_psa, pred_validate_psa, validate_loss]
     validate_df = pd.DataFrame(validate_list, index = ["true", 'predict', 'loss'])
-    validate_df.to_csv("./analysis-sigmoid/model_validate/validate_" + str(args.t) + "-" + patientNo + ".csv", index=True)
+    validate_df.to_csv("./analysis-sigmoid/model_validate/" + patientNo + "/validate_" + str(args.t) + "-" + patientNo + ".csv", index=True)
     print(validate_loss)
     x = inputs.numpy()
     plt.scatter(DAYS, PSA, color="black", marker="*", alpha=0.6)
@@ -720,17 +723,7 @@ def train_glv(args, alldata):
     pars_detach = pars.detach().numpy()
     plist = [A, K, states, pars_detach, best_pars]
     plist_df = pd.DataFrame(plist)
-    plist_df.to_csv("./analysis-sigmoid/model_pars/Args_" + str(args.t) + "-" + patientNo + ".csv", index=False)
-
-    if epoch == Epoch-1 and bool(abs(_loss - loss.detach().numpy()) > 1e-4 or loss.detach().numpy() > 20):
-        print("Stop at the end iteration! \n")
-        f = open("./analysis-sigmoid/model_infos/NotGood_patient.txt", "a")
-        f.write(patientNo + " reaches the final Epoch: ")
-        f.write(str(epoch))
-        f.write("pars: "+str(pars.detach().numpy()))
-        f.write("\n")
-        f.write("Loss: " + str(loss.detach().numpy()))
-        f.close()
+    plist_df.to_csv("./analysis-sigmoid/model_pars/"+patientNo+"/Args_" + str(args.t) + "-" + patientNo + ".csv", index=False)
 
 
 parser = argparse.ArgumentParser(description='Patient arguments')
