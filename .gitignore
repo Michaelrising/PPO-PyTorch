@@ -2,3 +2,5 @@
 *.log
 *.csv
 events.out.tfevents*
+./GLV/analysis-sigmoid
+./PPO_logs
