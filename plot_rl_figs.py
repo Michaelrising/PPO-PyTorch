@@ -46,23 +46,33 @@ def plot_figure(data, save_path, par = 0):
     ad = states[:, 0]
     ai = states[:, 1]
     psa = states[:, 2]
-    fig = plt.figure(figsize=(15, 5))
+    fig = plt.figure(figsize=(21, 7))
     plt.style.use('seaborn')
     plt.style.use(['science', "nature"])
     ax1 = fig.add_subplot(1, 2, 1)
     ax1.plot(x, psa, linestyle="-", linewidth=2)
-    # plt.scatter(x, psa, color=colors)
+    nadir_psa = min(psa)
+    nadir_psa_x = x[np.where(psa == nadir_psa)[0]]
+    # plt.scatter(nadir_psa_x, nadir_psa, color=cs[5], marker='*', s = 180)
     ax1.set_xlabel("Time (Days)",  fontsize=20)
     ax1.set_ylabel("PSA level (ug/L)",  fontsize=20)
     ax1.tick_params(labelsize = 20)
+    plt.text(-x[-1] * 0.17, max(psa) * 1.1, "d", fontdict={'size': 32, 'color': 'black', "family": 'Times New Roman'},
+             weight='bold')
 
     ax2 = fig.add_subplot(1, 2, 2)
     ax2.plot(x, ad, label="HD", c = cs[1], lw=2)
-    ax2.plot(x, ai, label="HI", c = cs[0], lw=2)
+    ax2.plot(x, ai, label="HI", c = cs[3], lw=2)
+    # plt.scatter(nadir_psa_x, ad[np.where(psa == nadir_psa)[0]], color=cs[5], marker='*', s=180)
+    # plt.annotate("Transition Point", xy=(nadir_psa_x, ad[np.where(psa == nadir_psa)[0]]),
+    #              xytext = (nadir_psa_x * 1.8, 1.5*ad[np.where(psa == nadir_psa)[0]]),
+    #              arrowprops=dict(facecolor=cs[5], shrink=0.05, edgecolor = cs[5]),
+    #              color= cs[5],fontsize =18)
     ax2.set_xlabel("Time (Days)",  fontsize=20)
     ax2.set_ylabel("Cell counts",  fontsize=20)
     ax2.tick_params(labelsize=20)
     ax2.legend(loc='upper right',  fontsize=20)
+
     plt.savefig(save_path + "_evolution" + save_name, dpi=300)
     plt.close()
 
@@ -83,6 +93,7 @@ def plot_figure(data, save_path, par = 0):
     ax2.plot(x_dose, doses[:, 1], color=COLOR_LEU, label='LEU', lw=2, ls='--')
     ax2.set_ylabel("LEU (ml/ Month)", fontsize=20)
     ax2.tick_params(axis="y", labelcolor=COLOR_LEU, labelsize=20)
+    ax2.tick_params(axis="x", labelsize=20)
     ax2.set_yticks(np.arange(0, 22.5, 7.5),  fontsize=20)
     plt.ylim(-.5, 15)
     ax2.legend(loc=(0.03, 0.8), fontsize=20, facecolor=COLOR_LEU)
@@ -324,19 +335,19 @@ if __name__ == '__main__':
     resistance_group = os.listdir('./PPO_preTrained/resistance_group')
     response_group = os.listdir('./PPO_preTrained/response_group')
     long_response_group = os.listdir('./PPO_preTrained/long_response_group')
-    for file in response_group:
-        Number = int(file[7:10])
-        args.number = Number
-        print(Number)
-        test(args, file, "response")
 
     for file in resistance_group:
         Number = int(file[7:10])
         args.number = Number
         print(Number)
         test(args, file, 'resistance')
-    for file in long_response_group:
-        Number = int(file[7:10])
-        args.number = Number
-        print(Number)
-        test(args, file, 'long_response')
+    # for file in long_response_group:
+    #     Number = int(file[7:10])
+    #     args.number = Number
+    #     print(Number)
+    #     test(args, file, 'long_response')
+    # for file in response_group:
+    #     Number = int(file[7:10])
+    #     args.number = Number
+    #     print(Number)
+    #     test(args, file, "response")

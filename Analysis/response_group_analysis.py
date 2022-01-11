@@ -11,7 +11,7 @@ a1, a2, a3, a4, a5, a6 = AnyObject(), AnyObject(), AnyObject(), AnyObject(), Any
 ##################### Resistance Group #######################
 ##############################################################
 cs = sns.color_palette()
-doseFileLise = os.listdir("../PPO_policy/resistance_group")
+doseFileLise = os.listdir("../PPO_policy/response_group")
 for file in doseFileLise.copy():
     if "survival" in file  or "patient036" in file or "patient078" in file:
         doseFileLise.remove(file)
@@ -20,7 +20,7 @@ patientCPA = []
 patientLEU = []
 patientSurvivalTime = []
 for file in doseFileLise:
-    doseSeq = pd.read_csv("../PPO_policy/resistance_group/" + file, names = ["Month", "CPA", "LEU"], header=0)
+    doseSeq = pd.read_csv("../PPO_policy/response_group/" + file, names = ["Month", "CPA", "LEU"], header=0)
     patient = file[:10]
     patientLables.append(patient)
     patientSurvivalTime.append(np.array(doseSeq).shape[0] * 28)
@@ -41,8 +41,8 @@ onLeu = "#87CEEB"
 offColor = "#696969"
 plt.style.use("seaborn")
 plt.style.use(["science", 'nature'])
-fig, ax = plt.subplots(figsize = (20, 10))
-simu_stop = [1380, None, 1486, 1238, None, None, None, None, None, 1298]
+fig, ax = plt.subplots(figsize = (20, 30))
+simu_stop = pd.read_csv('../Experts_policy/response_group_s_end_list.csv')
 
 for l, patient in enumerate(df_ppo_CPA.index):
     cpa_ppo = df_ppo_CPA.loc[patient, ~np.isnan(df_ppo_CPA.loc[patient])]
@@ -64,7 +64,7 @@ for l, patient in enumerate(df_ppo_CPA.index):
             barcontainer = ax.barh(patient+'-p', 28, left=month * 28, color=offColor, height=0.8, tick_label=None)
     s1 = plt.scatter(x=barcontainer.patches[0].get_x() + barcontainer.patches[0].get_width(),
                 y=barcontainer.patches[0].get_y() + barcontainer.patches[0].get_height() / 2, marker=4, color='black',
-                s=160, label = 'S-End')
+                s=200, label = 'S-End')
 
     clinical_data = pd.read_csv("../Data/dataTanaka/Bruchovsky_et_al/" + patient + ".txt", header=None)
     ONOFF = np.array(clinical_data.loc[:, 7])
@@ -87,13 +87,21 @@ for l, patient in enumerate(df_ppo_CPA.index):
         if np.isnan(leu) and np.isnan(cpa):
             barcontainer = ax.barh(patient + '-c', Days[ii + 1] - Days[ii], left=Days[ii], color=offColor, height=0.8,
                                    tick_label=None)
-    if simu_stop[l]:
-        plt.scatter(x = simu_stop[l],  y = barcontainer.patches[0].get_y() + barcontainer.patches[0].get_height()/2,
+        # if ONOFF[ii] == 1:
+        #     drugOnDays += Days[ii + 1] - Days[ii]
+        #     barcontainer= ax.barh(patient + '-c', Days[ii + 1] - Days[ii], left=Days[ii], color=onColor, height=0.8, tick_label=None,
+        #             alpha=0.5)
+        # else:
+        #     drugOffDays += Days[ii + 1] - Days[ii]
+        #     barcontainer =ax.barh(patient+ '-c', Days[ii + 1] - Days[ii], left=Days[ii], color=offColor, height=0.8, tick_label=None,
+        #             alpha=0.5)
+    if ~np.isnan(simu_stop.loc[l].item()):
+        plt.scatter(x = simu_stop.loc[l].item(),  y = barcontainer.patches[0].get_y() + barcontainer.patches[0].get_height()/2,
                 marker=4, color = 'black', s = 200, label ='S-End')
     else:
         CPA = [0, 50, 100, 150, 200]
         LEU = [0, 7.5]
-        extraDose = pd.read_csv("../Experts_policy/extrapolated/" +patient+"_extrapolated_doseSeq.csv")
+        extraDose = pd.read_csv("../Experts_policy/extrapolated/response_group/" +patient+"_extrapolated_doseSeq.csv")
         left = Days[-1]
         extraDose = np.array(extraDose)[:, -1]
         for ii in range(extraDose.shape[0]):
@@ -121,7 +129,7 @@ for l, patient in enumerate(df_ppo_CPA.index):
 
 locs, labels = plt.yticks()
 labels = df_ppo_CPA.index
-plt.yticks(np.arange(0.5, 19, 2), labels, fontsize = 22)
+plt.yticks(np.arange(0.5, 59, 2), labels, fontsize = 22)
 # plt.ylabel("1 $\longleftarrow$ Patient No. $\longrightarrow$ 108", fontsize = 24)
 plt.xticks(fontsize = 22)
 plt.xlabel("Time (Day)", fontsize = 24)
@@ -129,16 +137,17 @@ plt.xlim(-10, 3900)
 plt.legend([ a1, a2, a3, a4, s1, s2 ], ['C$\&$L-On',"Cpa-On ","Leu-On" ,'Treat-Off', 'S-End', 'C-End'],
            handler_map={a1: AnyObjectHandler(color=onColor), a2:AnyObjectHandler(color=onCpa, _hatch=None),
                         a3: AnyObjectHandler(color=onLeu, alpha = 0), a4: AnyObjectHandler(color=offColor,alpha=1, _hatch=None)}
-           , fontsize =18)
+           , fontsize =16)
+
 if not os.path.exists("../Analysis/"):
     os.mkdir("../Analysis/")
-plt.savefig("../Analysis/Resistance_group_Strategy.png", dpi = 500)
+plt.savefig("../Analysis/Response_group_Strategy.png", dpi = 500)
 plt.show()
 plt.close()
 
 
-resistance_group = os.listdir('../PPO_preTrained/resistance_group')
-statesFileList = os.listdir('../PPO_states/resistance_group')
+resistance_group = os.listdir('../PPO_preTrained/response_group')
+statesFileList = os.listdir('../PPO_states/response_group')
 for file in statesFileList.copy():
     if "survival" in file  or "patient036" in file or "patient078" in file:
         statesFileList.remove(file)
@@ -146,7 +155,7 @@ patientLables = []
 PSAThresholds = []
 patientSurvivalTime = []
 for file in statesFileList:
-    statesSeq = pd.read_csv("../PPO_states/resistance_group/" + file, names = ["AD", "AI", "PSA"], header=0)
+    statesSeq = pd.read_csv("../PPO_states/response_group/" + file, names = ["AD", "AI", "PSA"], header=0)
     patient = file[:10]
     patientLables.append(patient)
     psa = statesSeq['PSA']
@@ -155,6 +164,7 @@ for file in statesFileList:
     PSAThresholds.append(ratio_psa)
 
 ppo_off= [ ]
+
 df_ppo_drug = df_ppo_CPA + df_ppo_LEU
 for patient_i in df_ppo_drug.index:
     patient_drug = np.array(df_ppo_drug.loc[patient_i, ~np.isnan(df_ppo_drug.loc[patient_i])])
@@ -162,37 +172,28 @@ for patient_i in df_ppo_drug.index:
     ppo_off.append(off_percentage)
 
 off_clinical = []
-cpa_clinical_daily = []
-leu_clinical_monthly = []
-for patient_i in df_ppo_drug.index:
+list_clinical_time = []
+for l, patient_i in enumerate(df_ppo_drug.index):
     clinical_data = pd.read_csv("../Data/dataTanaka/Bruchovsky_et_al/" + patient_i + ".txt", header=None)
     onoff = np.array(clinical_data.loc[:, 7])
+    # if np.isnan(simu_stop.loc[l].item()):
+    #     extraDose = pd.read_csv(
+    #         "../Experts_policy/extrapolated/response_group/" + patient_i + "_extrapolated_doseSeq.csv")
+    #     list_clinical_time.append(clinical_data.loc[clinical_data.shape[0]-1, 9] - clinical_data.loc[0, 9] + extraDose.shape[0]*28)
+    # else:
+    list_clinical_time.append(clinical_data.loc[clinical_data.shape[0] - 1, 9] - clinical_data.loc[0, 9])
     Days = np.array(clinical_data.loc[:, 9].diff()[1:])
     Days = np.append(Days, 28)
     offdays = sum(Days[~onoff.astype(bool)])
     off_percentage = offdays/sum(Days)
     off_clinical.append(off_percentage)
-    patient_cpa = np.array(clinical_data.loc[:, 2])
-    clinical_cpa_daily = np.sum(patient_cpa[~np.isnan(patient_cpa)] * Days[~np.isnan(patient_cpa)])/(clinical_data.loc[clinical_data.shape[0]-1, 9] - clinical_data.loc[0, 9])
-    cpa_clinical_daily.append(clinical_cpa_daily)
-    patient_leu = np.array(clinical_data.loc[:, 3])
-    clinical_leu_monthly = patient_leu[~np.isnan(patient_leu)].sum()/(clinical_data.loc[clinical_data.shape[0]-1, 9] - clinical_data.loc[0, 9]) * 28
-    leu_clinical_monthly.append(clinical_leu_monthly)
+df_clinical_time = pd.DataFrame(list_clinical_time, columns =['clinical'], index = df_ppo_drug.index)
 
 from scipy.stats import ttest_rel
 print(ttest_rel(ppo_off, off_clinical))
 print(np.array(ppo_off)-np.array(off_clinical))
+np.mean(np.array(ppo_off)-np.array(off_clinical))
 
-## daily drug administration ##
-ppo_cpa_daily = []
-ppo_leu_monthly = []
-for patient_i in df_ppo_drug.index:
-    patient_cpa = np.array(df_ppo_CPA.loc[patient_i, ~np.isnan(df_ppo_CPA.loc[patient_i])])
-    cpa_daily = sum(patient_cpa)/(patient_cpa.shape[0]) * 200
-    patient_leu = np.array(df_ppo_LEU.loc[patient_i, ~np.isnan(df_ppo_LEU.loc[patient_i])])
-    leu_monthly = sum(patient_leu)/(patient_leu.shape[0]) * 7.5
-    ppo_cpa_daily.append(cpa_daily)
-    ppo_leu_monthly.append(leu_monthly)
-
-print(ttest_rel(ppo_cpa_daily, cpa_clinical_daily))
-print(ttest_rel(ppo_leu_monthly, leu_clinical_monthly))
+### Time to Progression ####
+diff_time = (df_ppo_Time['rl'] - df_clinical_time['clinical'])/df_clinical_time['clinical']
+print(ttest_rel(df_ppo_Time['rl'], df_clinical_time['clinical']))

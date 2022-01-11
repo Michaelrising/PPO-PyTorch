@@ -1,7 +1,60 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$" />
+    <content url="file://$MODULE_DIR$">
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient001/20211230-1327" />
+      <excludeFolder url="file://$MODULE_DIR$/Data/model_pars" />
+      <excludeFolder url="file://$MODULE_DIR$/Data/model_validate" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient001" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient002" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient003" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient004" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient006" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient011" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient012" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient013" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient015" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient016" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient017" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient019" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient020" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient024" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient025" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient029" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient030" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient031" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient032" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient036" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient037" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient040" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient042" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient044" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient046" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient050" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient051" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient052" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient054" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient056" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_infos/patient058" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_pars" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_plots" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid/model_validate" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/retrain-sigmoid" />
+      <excludeFolder url="file://$MODULE_DIR$/Experts_Analysis" />
+      <excludeFolder url="file://$MODULE_DIR$/Experts_figs" />
+      <excludeFolder url="file://$MODULE_DIR$/Experts_policy" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_Analysis" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_figs" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_logs" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_policy" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_states" />
+      <excludeFolder url="file://$MODULE_DIR$/GLV/analysis-sigmoid" />
+      <excludeFolder url="file://$MODULE_DIR$/Data" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_preTrained/gym_cancer:CancerControl-v0" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_preTrained/long_response_group" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_preTrained/resistance_group" />
+      <excludeFolder url="file://$MODULE_DIR$/PPO_preTrained/response_group" />
+    </content>
     <orderEntry type="jdk" jdkName="Remote Python 3.8.5 (sftp://yitao@59.37.56.152:7020/opt/anaconda3/bin/python)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>

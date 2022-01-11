@@ -9,6 +9,16 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="qingpeng2nd@59.37.56.143:6083">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/yitao/Projects/PPO-PyTorch/GLV" local="$PROJECT_DIR$/GLV" />
+          </mappings>
+          <excludedPaths>
+            <excludedPath local="true" path="$PROJECT_DIR$/GLV/retrain-sigmoid" />
+          </excludedPaths>
+        </serverdata>
+      </paths>
     </serverData>
     <option name="myAutoUpload" value="ALWAYS" />
   </component>
