@@ -4,3 +4,4 @@
 *.txt
 *.pth
 events.out.tfevents*
+./Analysis/MathJax
